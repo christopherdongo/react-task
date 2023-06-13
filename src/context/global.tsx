@@ -1,8 +1,8 @@
 import { createContext, useReducer, useContext } from "react";
 import {useReducerGlobal} from './globalReducer';
-import {contextType, GlobalProviderProps, dataTask, IActions,AssignTask} from '../types/types';
-import {ASSIGN_TAREA,CREATE_TAREA,DELETE_TAREA,UPDATE_TAREA} from '../utils/types';
-import {useAuth0} from '@auth0/auth0-react';
+import {contextType, GlobalProviderProps, dataTask,AssignTask, UserListItems,TaskInit, UserList, DeleteTask} from '../types/types';
+import {ASSIGN_TAREA,CREATE_TAREA,DELETE_TAREA,UPDATE_TAREA,ADD_USERS_LIST, ADD_TASKS_INIT, UPDATE_USERS_LIST} from '../utils/types';
+
 
 
 const INITIAL_STATE = {
@@ -35,6 +35,7 @@ export const GlobalProvider = ({children}: GlobalProviderProps) => {
     }
 
     const updateTask=(task:dataTask)=>{
+        console.log(task)
          dispatch({ 
             type: UPDATE_TAREA,
             payload:task,
@@ -43,24 +44,48 @@ export const GlobalProvider = ({children}: GlobalProviderProps) => {
          console.log('tarea actualizada');
     }
 
-    const deleteTask = (id:string) => {
-        console.log(id)
+    const deleteTask = (id: string) => {
          dispatch({ 
             type: DELETE_TAREA,
-            payload:{id},
+            payload:id,
             
-         }) 
-         console.log('tarea actualizada');
+         })
+         console.log('tarea eliminada');
     }
 
     const assignTask=(data:AssignTask)=>{
-       
           dispatch({ 
             type: ASSIGN_TAREA,
             payload:data
             
          })
+         console.log('tarea asignada');
+    }
+
+    const addUserList=(data:UserListItems)=>{
+          dispatch({ 
+            type: ADD_USERS_LIST,
+            payload:data
+            
+         })
          console.log('tarea actualizada');
+    }
+
+    const addTaskListInit=(data:TaskInit)=>{
+        dispatch({ 
+            type: ADD_TASKS_INIT,
+            payload:data
+            
+         })
+    }
+
+    const userUpdateList=(data:UserList)=>{
+    
+        dispatch({ 
+            type: UPDATE_USERS_LIST,
+            payload:data
+         })
+         console.log('usuario agregado')
     }
 
 
@@ -71,7 +96,10 @@ export const GlobalProvider = ({children}: GlobalProviderProps) => {
             createTask,
             updateTask,
             deleteTask,
-            assignTask
+            assignTask,
+            addUserList,
+            addTaskListInit,
+            userUpdateList
         }}
         >
           {children}

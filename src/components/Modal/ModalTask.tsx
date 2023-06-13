@@ -1,4 +1,4 @@
-import React  from "react";
+import React, { useEffect }  from "react";
 import {
   Modal,
   Button,
@@ -7,29 +7,13 @@ import {
   Textarea,
   Dropdown,
   Tooltip,
-  Col
 } from "@nextui-org/react";
 import {useAuth0} from "@auth0/auth0-react";
 import {useGlobalContext} from '../../context/global';
 import { v4 as uuidv4 } from 'uuid';
+import { useMutation } from '@apollo/client';
+import { Mutation_creaTask } from '../../graphql/mutations/createTask'
 
-
-
-
-const usuarios = [
-  {
-    id: 1,
-    name: "jose",
-  },
-  {
-    id: 2,
-    name: "Pedro",
-  },
-  {
-    id: 3,
-    name: "Julian",
-  },
-];
 
 export const ModalTask: React.FC = () => {
 
@@ -42,8 +26,24 @@ export const ModalTask: React.FC = () => {
   const [valid, setValid]=React.useState(false);
   const [task, setTask] = React.useState<{[key: string]: string}>({});
   const {user, isAuthenticated} = useAuth0();
-  const handler = () => setVisible(true);
 
+  const [taskCreate, {data:taskCreateData}] = useMutation(Mutation_creaTask)
+
+
+  //verifica el estado del graphql
+  useEffect(() => {
+    if(taskCreateData){
+      if(taskCreateData.taskCreate?.assigned===user?.nickname){
+        currentUser?.createTask(taskCreateData?.taskCreate);
+      }
+    
+    }
+
+  },[taskCreateData])
+
+
+  // cerrar el modal
+  const handler = () => setVisible(true);
   let id_task = uuidv4();
 
   const closeHandler = () => {
@@ -54,31 +54,39 @@ export const ModalTask: React.FC = () => {
     setValid(false);
   };
 
+  //select valor del switch
   const selectedValue = React.useMemo(
     () => Array.from(selected).join(", ").replaceAll("_", " "),
     [selected]
   );
 
+  //escuchar los cambios del input
   const changeInput = (e: any) => {
     const {name, value} = e.target;
 
     setTask((prev) => ({...prev, [name]: value}));
   };
 
+  //enviar la informacion 
   const sendData = () => {
 
-  console.log('holis')
     if(task.title && task.content && selected ){
       const data = {
-        id:id_task,
-        title: task.title && task.title,
+        id_task:id_task,
+        title: task.title,
         content:task.content,
         assigned: selected.currentKey ? selected.currentKey : user?.nickname,
         status: "pending",
         user_created: user?.nickname,
+        email: user?.email
       }
-      currentUser?.createTask(data);
-       closeHandler();
+       taskCreate({
+        variables: {
+          data:data
+        }
+
+      });
+      closeHandler()
     } else{
       setValid(!valid);
    console.log('no existe')
@@ -153,24 +161,36 @@ export const ModalTask: React.FC = () => {
             onChange={changeInput}
             fullWidth
           />
-          <Dropdown>
-            <Dropdown.Button flat>{selectedValue}</Dropdown.Button>
-            <Dropdown.Menu
-              aria-label="Single selection actions"
-              disallowEmptySelection
-              selectionMode="single"
-              selectedKeys={selected}
-              onSelectionChange={setSelected}
-            >
-              {usuarios.map((item) => (
-                <Dropdown.Item 
-                css={{
-                  width:'100%'
-                }}
-                key={item.name}>{item.name}</Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
+          {
+            currentUser?.user_list && (
+              <Dropdown>
+              <Dropdown.Button flat>{selectedValue}</Dropdown.Button>
+              <Dropdown.Menu
+                aria-label="Single selection actions"
+                disallowEmptySelection
+                selectionMode="single"
+                selectedKeys={selected}
+                onSelectionChange={setSelected}
+              >
+                {
+  
+                currentUser?.user_list && currentUser?.user_list?.map((item: any, index) => (
+                    <Dropdown.Item
+                    css={{
+                      width:'100%'
+                    }}
+                     key={item.username}
+                    >
+                        {item.username}
+                    </Dropdown.Item>
+                  ))
+                  
+  
+                }
+              </Dropdown.Menu>
+            </Dropdown>
+            )
+          }
           {
           valid && (
             <Text

@@ -2,6 +2,7 @@ import React from 'react'
 import {Button } from "@nextui-org/react";
 import { useAuth0 } from "@auth0/auth0-react";
 
+
 export const SignupButton: React.FC=()=>{
 
     const { loginWithRedirect } = useAuth0();
@@ -20,7 +21,7 @@ export const SignupButton: React.FC=()=>{
 
     return (
         <>
-        <Button auto ghost color="primary"  onClick={handleSignUp}>
+        <Button auto ghost color="primary"  type='button'  onClick={handleSignUp}>
               crear cuenta
             </Button>
         </>

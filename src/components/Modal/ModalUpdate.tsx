@@ -11,22 +11,8 @@ import {
 import {useAuth0} from "@auth0/auth0-react";
 import {useGlobalContext} from '../../context/global';
 import {updateTask} from '../../types/types';
-
-
-const usuarios = [
-  {
-    id: 1,
-    name: "jose",
-  },
-  {
-    id: 2,
-    name: "Pedro",
-  },
-  {
-    id: 3,
-    name: "Julian",
-  },
-];
+import { useMutation } from '@apollo/client';
+import { Mutation_updateTask } from '../../graphql/mutations/updateTask'
 
 interface tForm {
   title?: string,
@@ -34,7 +20,7 @@ interface tForm {
 
 }
 
-export const ModalUpdate: React.FC<updateTask> = ({id,content,assigned,title,status,user_created}) => {
+export const ModalUpdate: React.FC<updateTask> = ({id,id_task, content,assigned,title,status,user_created}) => {
 
   const currentUser = useGlobalContext();
   const {user, isAuthenticated} = useAuth0();
@@ -47,62 +33,97 @@ export const ModalUpdate: React.FC<updateTask> = ({id,content,assigned,title,sta
   const [valid, setValid]=React.useState(false);
   const [task, setTask] = React.useState<tForm | undefined>(undefined);
 
+  const [taskUpdate, {data:taskUpdateData}] = useMutation(Mutation_updateTask)
+
   const handler = () => setVisible(true);
-
-  React.useEffect(() => {
-     setTaskId(id)
-     setTask({
-      ...task,
-      "title":title,
-      "content":content
-     })
-
-  },[id,content,assigned,title,status,user_created])
 
   const closeHandler = () => {
     setVisible(false);
     console.log("closed");
     setValid(false);
+    setTask({
+      ...task,
+      "title":title,
+      "content":content
+     })
   };
-
-  const selectedValue = React.useMemo(
-    () => Array.from(selected).join(", ").replaceAll("_", " "),
-    [selected]
-  );
 
   const changeInput = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const {name, value} = e.target;
-
     setTask((prev) => ({...prev, [name]: value}));
   };
 
   const updateData = () => {
 
-  console.log('holis')
     if(task?.title && task?.content && selected ){
       const data = {
-        id:tkasId,
+        id:id,
+        id_task:tkasId,
         title: task?.title,
         content:task?.content,
-        assigned: selected.currentKey ? selected.currentKey : user?.nickname,
+        assigned: selected.has(assigned)? assigned : selected.currentKey,
         status: status,
         user_created: user_created,
+        email:user?.email,
       }
-      currentUser?.updateTask(data);
-       closeHandler();
-       console.log(data)
+       
+      taskUpdate({
+        variables: {
+          data:data
+        }
+      })
+      closeHandler();
     } else{
       setValid(!valid);
    console.log('no existe')
     }
-
-    
   };
+
+  const closedHandler2=()=>{
+    setVisible(false);
+    console.log("closed");
+    setValid(false);
+    setSelected(new Set([`${assigned}`]))
+    setTask({
+      ...task,
+      "title":title,
+      "content":content
+     })
+  }
 
   const colorButton = () => {
     if (isAuthenticated) return "primary";
     return "warning";
   };
+
+
+  React.useEffect(() => {
+       if(id){
+        setTaskId(id_task);
+        setSelected(new Set([`${assigned}`]));
+        setTask({
+         ...task,
+         "title":title,
+         "content":content
+        })
+        
+       }
+ // eslint-disable-next-line 
+  },[id, assigned])
+
+
+React.useEffect(() => {
+     if(taskUpdateData){
+      currentUser?.updateTask(taskUpdateData.taskUpdate);
+      setSelected(new Set([`${taskUpdateData.taskUpdate.assigned}`]))
+     }
+},[taskUpdateData])
+
+
+const selectedValue = React.useMemo(
+  () => Array.from(selected).join(", ").replaceAll("_", " "),
+  [selected]
+);
 
   return (
     <div>
@@ -110,7 +131,7 @@ export const ModalUpdate: React.FC<updateTask> = ({id,content,assigned,title,sta
         content={isAuthenticated ? "" : "Inicie Session o cree una Cuenta"}
         color={colorButton()}
       >
-        <Button size="sm" shadow onPress={handler} disabled={!isAuthenticated}>
+        <Button size="sm" shadow onPress={handler} disabled={status==="finished" ? true : false}>
          Editar
         </Button>
       </Tooltip>
@@ -119,7 +140,7 @@ export const ModalUpdate: React.FC<updateTask> = ({id,content,assigned,title,sta
         preventClose
         aria-labelledby="modal-title"
         open={visible}
-        onClose={closeHandler}
+        onClose={closedHandler2}
 
         css={{
           '@xsMax':{
@@ -167,26 +188,28 @@ export const ModalUpdate: React.FC<updateTask> = ({id,content,assigned,title,sta
             onChange={changeInput}
             fullWidth
           />
-          <Dropdown>
-            <Dropdown.Button flat>{selectedValue}</Dropdown.Button>
-            <Dropdown.Menu
-              aria-label="Single selection actions"
-              disallowEmptySelection
-              selectionMode="single"
-              selectedKeys={selected}
-              onSelectionChange={setSelected}
-              defaultValue={assigned}
-              defaultChecked={true}
-            >
-              {usuarios.map((item) => (
-                <Dropdown.Item 
-                css={{
-                  width:'100%'
-                }}
-                key={item.name}>{item.name}</Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
+            {
+              currentUser?.user_list && <Dropdown>
+              <Dropdown.Button flat>{selectedValue}</Dropdown.Button>
+              <Dropdown.Menu
+                aria-label="Single selection actions"
+                disallowEmptySelection
+                selectionMode="single"
+                selectedKeys={selected}
+                onSelectionChange={setSelected}
+                defaultValue={assigned}
+                defaultChecked={true}
+              >
+                {currentUser?.user_list.map((item: any) => (
+                  <Dropdown.Item 
+                  css={{
+                    width:'100%'
+                  }}
+                  key={item.username}>{item.username}</Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown>
+            }
           {
           valid && (
             <Text
@@ -203,7 +226,7 @@ export const ModalUpdate: React.FC<updateTask> = ({id,content,assigned,title,sta
         </Modal.Body>
 
         <Modal.Footer>
-          <Button auto flat color="error" onPress={closeHandler}>
+          <Button auto flat color="error" onPress={closedHandler2}>
             Salir
           </Button>
 

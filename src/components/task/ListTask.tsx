@@ -15,9 +15,9 @@ export const ListTask: React.FC =()=>{
         }}>
             {
                 currentUser?.task.map( (item, index) => (
-                    <Grid  xs={12} sm={6} md={4}
+                    <Grid  key={index} xs={12} sm={6} md={4}
                     >
-                    <Task  key={index} {...item}  />
+                    <Task  {...item}  />
                   </Grid>
                 ))
             }

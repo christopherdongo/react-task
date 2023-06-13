@@ -1,32 +1,54 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, Text, Button, Row, Col} from "@nextui-org/react";
 import { updateTask } from '../../types/types';
 import {ModalUpdate} from '../Modal/ModalUpdate';
 import {useGlobalContext} from '../../context/global';
+import { useMutation } from '@apollo/client';
+import {Mutation_deleteTask} from '../../graphql/mutations/deleteTask';
+import { updateFunction } from 'src/services/services';
 
 
 export type ArgunmentFunction = (id: string | undefined) => void;
 export type ArgunmentFuntcionAssign = (id: string | undefined , status: string | undefined) => void
 
-export const Task: React.FC<updateTask> =({id,content,assigned,title,status,user_created })=>{
+export const Task: React.FC<updateTask> =({id, id_task, content,assigned,title,status,user_created })=>{
 
   const userContext = useGlobalContext();
 
+  const [taskDelete,{loading, data}] = useMutation(Mutation_deleteTask);
 
-    const deleteTask: ArgunmentFunction =(id)=>{
-      userContext?.deleteTask({id})
+    const deleteTask: ArgunmentFunction = (id)=>{
+      console.log(id)
+       taskDelete({
+        variables:{
+               data:{
+                id: id,
+                force:true
+               }
+        }
+      })
+      userContext?.deleteTask(id)
     }
 
-    const updateStatus: ArgunmentFuntcionAssign=(id, status)=>{
+    const updateStatus: ArgunmentFuntcionAssign=async (id, status)=>{
+         
            if(status === 'pending'){
             const newStatus = "finished"
-            userContext?.assignTask({id,status:newStatus})
+            updateFunction({id, newStatus})
+           userContext?.assignTask({id,status:newStatus})
            }else{
             const newStatus = "pending"
+            updateFunction({id, newStatus})
             userContext?.assignTask({id,status:newStatus})
            }
-
     }
+
+    useEffect(() =>{
+        if(data?.taskDelete?.success === true){
+          console.log(data?.taskDelete?.success)
+          userContext?.deleteTask(id)
+        }
+    },[data])
 
     return (
           <Card css={{ width:'100%', cursor:'pointer' }} isHoverable variant="bordered" >
@@ -75,7 +97,7 @@ export const Task: React.FC<updateTask> =({id,content,assigned,title,status,user
               <Col>
              {status === 'pending' ? ( <Button color="error" size="xs"  onPress={() => updateStatus(id, status)}>
                 Estado: Pendiente
-              </Button>) : ( <Button color="error" size="xs"  onPress={() => updateStatus(id, status)}>
+              </Button>) : ( <Button color="success" size="xs"  onPress={() => updateStatus(id, status)}>
                   Estado: Terminado
               </Button>)}
         
@@ -97,11 +119,11 @@ export const Task: React.FC<updateTask> =({id,content,assigned,title,status,user
               }}
               >
                 <Button size="sm" color="error"
-                onClick={() => deleteTask(id)}
+                onPress={() => deleteTask(id)}
                 >
                   Eliminar
                 </Button>
-                <ModalUpdate id={id} content={content} assigned={assigned} title={title} status={status} user_created={user_created} />
+                <ModalUpdate id={id} id_task={id_task} content={content} assigned={assigned} title={title} status={status} user_created={user_created} />
               </Row>
             </Card.Footer>
           </Card>

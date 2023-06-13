@@ -1,8 +1,7 @@
 import React from "react";
-import { Container, Col, Loading, Spacer, Row  } from '@nextui-org/react';
+import { Container, Col, Loading } from '@nextui-org/react';
 
 export const PageLoader: React.FC = () => {
-  const loadingImg = "https://cdn.auth0.com/blog/hello-auth0/loader.svg";
 
   return (
    <Container

@@ -6,22 +6,22 @@ export const AvatarUser: React.FC =()=>{
    
   const {user} = useAuth0();
 
-  console.log(user)
+
 
     return (
         <Grid.Container gap={2}>
         <Grid>
           {
             user && <Avatar
-            src={user.picture}
+            src={user?.picture}
             css={{ size: "$18" }}
           />
           }
         </Grid>
          {
           user && <Grid>
-          <Text><Text span weight="bold">User:</Text> {user.nickname}</Text>
-          <Text><Text span weight="bold">Email:</Text> {user.email}</Text>
+          <Text><Text span weight="bold">User:</Text> {user?.nickname}</Text>
+          <Text><Text span weight="bold">Email:</Text> {user?.email}</Text>
         </Grid>
          }
       </Grid.Container>
