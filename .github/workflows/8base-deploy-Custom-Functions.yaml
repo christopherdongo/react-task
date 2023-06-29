@@ -1,0 +1,22 @@
+name: 8base Deploy Custom Functions
+on:
+  push:
+    branches:
+      - main
+env:
+ EIGHT_BASE_API_TOKEN: ${{secrets.EIGHT_BASE_API_TOKEN}}
+ EIGHT_BASE_WORKSPACE_ID: ${{secrets.EIGHT_BASE_WORKSPACE_ID}}
+ CI: true
+jobs:
+  deploy:
+     runs-on: ubuntu-latest
+     steps:
+       - uses: actions/checkout@v2
+       - name: Install 8base-cli
+         run: sudo npm i -g 8base-cli
+       - name: Deploy to 8base
+         working-directory: ./my-functions
+         run : |
+           8base login --token ${{env.EIGHT_BASE_API_TOKEN}}
+           8base configure --workspaceId ${{env.EIGHT_BASE_WORKSPACE_ID}}
+           8base deploy
